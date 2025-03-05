@@ -9,6 +9,7 @@ from Merge3_sort import merge3Sort
 from Quick_sort import quickSort
 from Quick_sort import quickSort_posiciones
 from Quick_sort import quickSort_aleatorio
+from Heap_sort import heapSort
 
 
 def check_sorted(algorithm, original, ordenada):
@@ -41,7 +42,7 @@ def pythonSort(l):
 
 # algoritmos a evaluar
 algorithms = [bubbleSort, selectionSort, insertionSort, mergeSort, merge3Sort, quickSort, quickSort_posiciones,
-              quickSort_aleatorio, pythonSort]
+              quickSort_aleatorio, heapSort, pythonSort]
 tiempos = [0] * len(algorithms)
 
 for n in range(0, num_samples):
@@ -62,14 +63,15 @@ for algorithm, t in zip(algorithms, tiempos):
 Ejemplo de Ejecución
 Num Samples = 30
 Num Elements = 10000
-bubbleSort : 0.38772154000000003
-selectionSort : 0.18429686333333334
-insertionSort : 0.1801445633333333
-mergeSort : 0.0018318766666666666
-merge3Sort : 0.0015995066666666666
-quickSort : 0.0012313066666666667
-quickSort_posiciones : 0.0016184300000000001
-quickSort_aleatorio : 0.0025000033333333334
-pythonSort : 6.695e-05
+bubbleSort : 0.42915241000000004
+selectionSort : 0.18453469
+insertionSort : 0.20162079666666666
+mergeSort : 0.0019794366666666665
+merge3Sort : 0.00168594
+quickSort : 0.0012269566666666667
+quickSort_posiciones : 0.0015756766666666668
+quickSort_aleatorio : 0.0022632333333333335
+heapSort : 0.00788566
+pythonSort : 6.846e-05
 
 """
