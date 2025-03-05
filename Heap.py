@@ -2,6 +2,9 @@ class Heap:
     def __init__(self):
         self.__valores = []
 
+    def get_num_elements(self):
+        return len(self.__valores)
+
     def get_parent(self, index):
         if index == 0:
             return None
@@ -25,11 +28,15 @@ class Heap:
         return len(self.__valores)
 
     def get_valor(self, index):
-        return self.__valores[index]
+        return self.__valores[index][0]
 
-    def insert(self, valor):
+    def get_data(self, index):
+        return self.__valores[index][1]
+
+    def insert(self, valor, data=None):
+        t = (valor, data)
         index = self.get_num_elements()
-        self.__valores.append(valor)
+        self.__valores.append(t)
         p_index = self.get_parent(index)
         while p_index != None:
             if self.get_valor(p_index) > valor:
@@ -89,4 +96,3 @@ class Heap:
                     index = hd
                     seguir = True
         return r
-
