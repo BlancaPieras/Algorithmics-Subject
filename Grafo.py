@@ -1,4 +1,6 @@
 import copy
+from UnionFind import UnionFind
+from Heap import Heap
 
 
 class Nodo:
@@ -175,6 +177,7 @@ class Grafo:
             if n.explorado == False:
                 self.dfs_topo(n)
 
+
         resultado = []
         for n in self.__nodos:
             r = (n, n.orden)
@@ -186,22 +189,54 @@ class Grafo:
 
         return resultado
 
+    def prim(self):
+        nodo_fuente = self.__nodos[0]
+        MAX_VALUE = 999
+        resultado = []
+        for n in self.__nodos:
+            n.explorado = False
+        nodo_fuente.explorado = True
+        l = [nodo_fuente]
+        menor_peso = 0
+        while menor_peso >= 0:
+            best_arista = None
+            menor_peso = -1
+            for n in l:
+                for a in n.get_aristas_salida():
+                    if a.get_llegada().explorado == False:
+                        total = a.get_peso()
+                        if best_arista == None or total < menor_peso:
+                            menor_peso = total
+                            best_arista = a
 
-g1 = Grafo(False)
-g1.add_nodo("A")
-g1.add_nodo("B")
-g1.add_nodo("C")
-g1.add_nodo("D")
-g1.add_nodo("E")
-g1.add_arista("A", "B", 1)
-g1.add_arista("A", "C", 3)
-g1.add_arista("B", "C", 1)
-g1.add_arista("B", "D", 2)
-g1.add_arista("C", "D", 3)
-g1.add_arista("D", "E", 1)
+            if best_arista != None:
+                nuevo = best_arista.get_llegada()
+                nuevo.explorado = True
+                l.append(nuevo)
+                resultado.append(best_arista)
 
-caminos = g1.dijkstra(g1.get_nodo("A"))
-print(caminos)
+        for n in self.__nodos:
+            # borramos los atribtos temporales creados
+            del n.explorado
+        return resultado
+
+    def kruskal(self):
+        resultado = []
+        uf = UnionFind(self.__nodos)
+        h = Heap()
+        for a in self.__aristas:
+            h.insert(a.get_peso(), a)
+        num_nodos = len(self.__nodos)
+        while len(resultado) < num_nodos-1 and h.get_num_elements()> 0:
+            peso, a = h.extract_min()
+            origen = a.get_salida()
+            destino = a.get_llegada()
+            if uf.find(origen) != uf.find(destino):
+                resultado.append(a)
+                uf.union(origen, destino)
+        return resultado
+
+
 
 g2 = Grafo(False)
 g2.add_nodo("S")
@@ -219,5 +254,8 @@ g2.add_arista("C", "D", 3)
 g2.add_arista("B", "T", 2)
 g2.add_arista("D", "T", 2)
 
-caminos = g2.dijkstra(g2.get_nodo("S"))
-print(caminos)
+arbol = g2.prim()
+print(arbol)
+
+arbol = g2.kruskal()
+print(arbol)
