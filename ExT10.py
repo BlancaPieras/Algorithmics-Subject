@@ -11,13 +11,13 @@ class Nodo():
         self.nivel = 100000 #Valor que no se alcanza (infinito)
         self.explorado = False #Marcamos todos los nodos como no explorados inicialmente
         self.FdeNodo = None #f(nodo) inicialmente no tiene valor para la ordenación topológica
-
+        self.distancia = 100000000  # infinito inicialmente
     def __repr__(self):
         return self.__nombre #el representante de un elemento de la clase nodo es su nombre
     def AgregarAristaNodo(self,arista):
         self.ListaAristas.append(arista)
     def getListaAristasNodo(self): #lista de aristas que salen de un nodo
-        return self.__ListaAristas
+        return self.ListaAristas
 
 class Arista():
     identificador = 0
@@ -26,7 +26,6 @@ class Arista():
         self.__destino = destino
         self.__identificador = Arista.identificador
         self.__nombre = str((origen,destino))
-        self.peso = 1000000 #infinito inicialmente
         Arista.identificador += 1 #Asigna un valor a cada nueva arista que se crea
     def __repr__(self):
         return self.__nombre #El representante d eun elemento de la clase arista es su nombre
@@ -34,6 +33,11 @@ class Arista():
         return self.__destino
     def GetOrigen(self):
         return self.__origen
+    def AristasIguales(self,arista):
+        if isinstance(arista,Arista):
+            if arista.__nombre == self.__nombre:
+                return True
+        return False
 
 class Grafo():
     def __init__(self,  dirigido = True):
@@ -49,37 +53,56 @@ class Grafo():
         self.__ListaAristas.append(Arista(origen,destino))
         if self.dirigido == False:
             self.__ListaAristas.append(Arista(destino,origen))
+        return Arista(origen,destino)
     def getListaAristas(self):
         return self.__ListaAristas
-    def peso(self,inicio,fin): # d(v) = peso = suma niveles camino más corto de nodo inicio a nodo fin.
-        aux = self.CaminoMasCorto(inicio)
-        c = 0
-        for i in aux:
-            while i != fin:
-                c += i.nivel
-        return c + i.nivel #retorna per cada node o per fin?
+    def EncontrarIndiceArista(self,arista):
+        for i in range(len(self.__ListaAristas)):
+            if self.__ListaAristas[i].AristasIguales(arista):
+                return i
+    def getPesoArista(self,arista,ListaPesos):
+        i = self.EncontrarIndiceArista(arista)
+        return ListaPesos[i]
     def ExisteArista(self,X):
         for i in self.__ListaAristas:
-            if i.origen in X and i.destino not in X:
-                return True #retorna true quan en troba una o el valor canvia per cada i?
+            if i.GetDestino() not in X and i.GetOrigen() in X:
+                return True
+        return False
+    def Distancia(self,inicio,fin,ListaPesos): # d(v) = suma pesos aristas camino más corto de nodo inicio a nodo fin.
+        AristasCamino = []
+        NodosCamino=[inicio]
+        distancia = 0
+        for i in range(len(self.CaminoMasCorto(inicio))): #del camino más corto total, cogmeos los nodos hasta el que nos interesa
+            while self.CaminoMasCorto(inicio)[i] != fin:
+                NodosCamino.append(self.CaminoMasCorto(inicio)[i])
+        NodosCamino.append(fin)
+        print('Los nodos del camino son: ' + str(NodosCamino))
+        for i in range(len(NodosCamino)-1): #Creamos la lista de las aristas de este camino
+            AristasCamino.append(Arista(NodosCamino[i],NodosCamino[i+1]))
+            i += 1
+        print('Las aristas del camino son: ' + str(AristasCamino))
+        for i in AristasCamino:#Sumamos sus pesos a la distancia.
+            distancia += self.getPesoArista(i,ListaPesos)
+            print(self.getPesoArista(i,ListaPesos))
+        fin.distancia = distancia #asignamos el valor distancia al atributo distancia del nodo
+        return distancia
 
-    def Dijkstra(self,s):#entrada: grafo y nodo s, Salida: \forall v \in self.__ListaAristas, d(v)=min(CaminoMasCorto(s,v))
-        if self.dirigido == True:
-            ListaPesos = []
-            for i in self.__ListaAristas:
-                ListaPesos.append(peso(s,i)) #La lista de pesos la definimos aquí
-            print('Las aristas ' + str(self.__ListaAristas) + ' tienen pesos ' + str(ListaPesos))
-            X = [s] #Conjunto de nodos visitados
-            s.peso = 0
-            while self.ExisteArista(self,X) == True:
-                #e*=(v*,w*) que minimiza el valor d(v)+le*
-                print()
-
-
-
-        else:
-            return 'El grafo no es dirigido.'
-
+    def Dijkstra(self,NodoActual,ListaPesos):#Entrada:grafo, nodo, pesos aristas. Salida: para cada nodo, su distancia desde s a él.
+        X = [NodoActual]
+        NodoActual.distancia = 0
+        print(self.ExisteArista(X))
+        while self.ExisteArista(X) == True:
+            peso = 1000000000 #infinito inicialmente
+            for i in NodoActual.ListaAristas:
+                if peso > self.getPesoArista(i,ListaPesos) + i.GetOrigen().distancia:
+                    peso = self.getPesoArista(i,ListaPesos)
+                    X.append(i.GetDestino())
+                    i.GetDestino().distancia = self.Distancia(NodoActual, i.GetOrigen(),ListaPesos) + i.getPesoArista()
+                    NodoActual = i.GetDestino
+                    self.Dijkstra(NodoActual,ListaPesos)
+            for i in range(len(self.__ListaNodos)):
+                distancias.append(self.__ListaNodos[i].distancia)
+            return distancias
 
 #inicialmente para NO DIRIGIDOS
     def CaminoMasCorto(self, nodo): #Salida: los nodos marcados como explorados son accesibles desde nodo
@@ -100,325 +123,119 @@ class Grafo():
         camino.remove(nodo) #quitamos el nodo inicial de la lista de nodos accesibles
         return camino #Lista de nodos accesibles desde el nodo
 
-    def DFSTopo(self, s):
-        s.explorado = True
-        for arista in s.ListaAristas:
-            if arista.GetDestino().explorado == False: #si el nodo destino de la arista es no explorado
-                self.DFSTopo(arista.GetDestino()) #aplicamos recursividad
-        s.FdeNodo = self.CurLabel #f(s) = nº nodos por colocar
-        self.CurLabel -= 1 #queda uno menos por colocar
-#Inicialmente para GRAFOS DIRIGIDOS
-    def OrigenTopologico(self): #Salida: f-valores de los nodos
-        if self.dirigido == True or len(self.__ListaAristas) == 0:
-            for i in self.__ListaNodos:
-                i.explorado = False
-            self.CurLabel = len(self.__ListaNodos)-1  #número de nodos por colocar
-            fvalores = [] #lista de los fvalores de los nodos
-            for v in self.__ListaNodos:
-                if v.explorado == False:
-                    self.DFSTopo(v)
-                fvalores.append(v.FdeNodo)  # añadimos el valor f(nodo) a la lista de fvalores
-            return fvalores
-        else:
-            return ('El grafo no es dirigido y tiene ' + str(len(self.__ListaAristas)) + ' aristas \n-> No '
-            'podemos realizar la ordenación topológica ya que para cada arista se da a la vez lo siguiente:\n'
-            'f(nodo_orígen)<f(nodo_destino) y f(nodo_destino)<f(nodo_origen). CONTRADICCIÓN!' )
 
+print('------------------------------ EJEMPLO DIJKSTRA ----------------------------')
 
+a = Nodo('a')
+b = Nodo('b')
+c = Nodo('c')
+d = Nodo('d')
+#e = Nodo('e')
+#f = Nodo('f')
+#g = Nodo('g')
+#h = Nodo('h')
 
+D = Grafo(False)
+
+D.AgregarNodo(a)
+D.AgregarNodo(b)
+D.AgregarNodo(c)
+D.AgregarNodo(d)
+#D.AgregarNodo(e)
+#D.AgregarNodo(f)
+#D.AgregarNodo(g)
+#D.AgregarNodo(h)
+print('La lista de nodos es: ' + str(D.getListaNodos()))
+
+#Añadimos las Aristas
+ab = D.CrearArista(a,b)
+ac =D.CrearArista(a,c)
+ad = D.CrearArista(a,d)
+bc = D.CrearArista(b,c)
+#D.CrearArista(b,f)
+#D.CrearArista(b,g)
+cd = D.CrearArista(c,d)
+#D.CrearArista(c,f)
+#D.CrearArista(c,e)
+#D.CrearArista(d,e)
+#D.CrearArista(e,f)
+#D.CrearArista(e,h)
+#D.CrearArista(f,g)
+#D.CrearArista(f,h)
+#D.CrearArista(g,h)
+
+print('La lista de aristas es: ' + str(D.getListaAristas()))
+
+a.AgregarAristaNodo(D.getListaAristas()[0])
+a.AgregarAristaNodo(D.getListaAristas()[2])
+a.AgregarAristaNodo(D.getListaAristas()[4])
+print('la lista de aristas de a es: ' + str(a.getListaAristasNodo()))
+b.AgregarAristaNodo(D.getListaAristas()[1])
+b.AgregarAristaNodo(D.getListaAristas()[6])
+b.AgregarAristaNodo(D.getListaAristas()[8])
+#b.AgregarAristaNodo(D.getListaAristas()[10])
+print('la lista de aristas de b es: ' + str(b.getListaAristasNodo()))
+
+c.AgregarAristaNodo(D.getListaAristas()[3])
+c.AgregarAristaNodo(D.getListaAristas()[7])
+#c.AgregarAristaNodo(D.getListaAristas()[12])
+#c.AgregarAristaNodo(D.getListaAristas()[14])
+#c.AgregarAristaNodo(D.getListaAristas()[16])
+#c.AgregarAristaNodo(D.getListaAristas()[3])
+print('la lista de aristas de c es: ' + str(c.getListaAristasNodo()))
+
+d.AgregarAristaNodo(D.getListaAristas()[5])
+#d.AgregarAristaNodo(D.getListaAristas()[13])
+#d.AgregarAristaNodo(D.getListaAristas()[18])
+print('la lista de aristas de d es: ' + str(d.getListaAristasNodo()))
 '''
-NOTAS SOBRE LOS CAMBIOS RESPECTO AL EJERCICIO OBLIGATORIO:
+e.AgregarAristaNodo(D.getListaAristas()[17])
+e.AgregarAristaNodo(D.getListaAristas()[19])
+e.AgregarAristaNodo(D.getListaAristas()[20])
+e.AgregarAristaNodo(D.getListaAristas()[22])
+print('la lista de aristas de e es: ' + str(e.getListaAristasNodo()))
 
-------------- CAMINO MÁS CORTO ----------
+f.AgregarAristaNodo(D.getListaAristas()[9])
+f.AgregarAristaNodo(D.getListaAristas()[15])
+f.AgregarAristaNodo(D.getListaAristas()[21])
+f.AgregarAristaNodo(D.getListaAristas()[24])
+print('la lista de aristas de f es: ' + str(f.getListaAristasNodo()))
 
-En este método, simplemente hemos eliminado la condición de que el grafo sea no dirigido para aplicarlo.
+g.AgregarAristaNodo(D.getListaAristas()[11])
+g.AgregarAristaNodo(D.getListaAristas()[25])
+g.AgregarAristaNodo(D.getListaAristas()[28])
+print('la lista de aristas de g es: ' + str(g.getListaAristasNodo()))
 
-
-------------- ORDENACIÓN TOPOLÓGICA -----
-
-- Hemos eliminado la condición de que el grafo sea dirigido.
-- El único caso en el que funciona el método para grafos no dirigidos es si no existen aristas en el grafo. 
-- Además, como en el programa principal aplicamos primero CaminoMasCorto, antes de comenzar, redefinimos todos 
-    los valores explorado de los nodos como False.
-
+h.AgregarAristaNodo(D.getListaAristas()[23])
+h.AgregarAristaNodo(D.getListaAristas()[27])
+h.AgregarAristaNodo(D.getListaAristas()[29])
+print('la lista de aristas de h es: ' + str(h.getListaAristasNodo()))
 '''
-
-print('--------------------------------------PROGRAMA PRINCIPAL-----------------------------------')
-
-#PRUEBA CON GRAFO DIRIGIDO
-print('-------------GRAFO DIRIGIDO---------------')
-#Definimos los nodos
-s = Nodo('s')
-v = Nodo('v')
-w = Nodo('w')
-t = Nodo('t')
-
-#Creamos un grafo dirigido:
-g = Grafo(True)
-
-#Añadimos los nodos
-g.AgregarNodo(s)
-g.AgregarNodo(v)
-g.AgregarNodo(w)
-g.AgregarNodo(t)
-print('La lista de nodos es: ' + str(g.getListaNodos()))
-
-#Añadimos las Aristas
-g.CrearArista(s,v)
-g.CrearArista(s,w)
-g.CrearArista(v,t)
-g.CrearArista(w,t)
-print('La lista de aristas es: ' + str(g.getListaAristas()))
-#Añadimos a cada nodo sus aristas salientes:
-s.AgregarAristaNodo(g.getListaAristas()[0])
-s.AgregarAristaNodo(g.getListaAristas()[1])
-print('La lista de aristas de s es: '+ str(s.ListaAristas))
-v.AgregarAristaNodo(g.getListaAristas()[2])
-print('La lista de aristas de v es: '+ str(v.ListaAristas))
-w.AgregarAristaNodo(g.getListaAristas()[3])
-print('La lista de aristas de w es: '+ str(w.ListaAristas))
-print('La lista de aristas de t es: '+ str(t.ListaAristas))
-
-aux = g.CaminoMasCorto(s)
+aux5 = D.CaminoMasCorto(a)
 niveles = []
-for i in aux:
+for i in aux5:
     niveles.append(i.nivel)
 
-print('Los nodos accesibles desde s son: ' + str(aux) + ' en los niveles: ' + str(niveles))
-
-print('La ordenación topológica de los nodos ' +str(g.getListaNodos()) + ' es: ' + str(g.OrigenTopologico()))
-
-
-#PRUEBA CON GRAFO NO DIRIGIDO
-print('-----------------GRAFO NO DIRIGIDO--------------')
-#Definimos los nodos
-a = Nodo('a')
-b = Nodo('b')
-c = Nodo('c')
-d = Nodo('d')
-#Creamos un grafo no dirigido:
-G = Grafo(False)
-
-#Añadimos los nodos
-G.AgregarNodo(a)
-G.AgregarNodo(b)
-G.AgregarNodo(c)
-G.AgregarNodo(d)
-print('La lista de nodos es: ' + str(G.getListaNodos()))
-
-#Añadimos las Aristas
-G.CrearArista(a,b)
-G.CrearArista(b,d)
-G.CrearArista(a,c)
-G.CrearArista(c,d)
-print('La lista de aristas es: ' + str(G.getListaAristas()))
-#Añadimos a cada nodo sus aristas salientes:
-a.AgregarAristaNodo(G.getListaAristas()[0])
-a.AgregarAristaNodo(G.getListaAristas()[1])
-a.AgregarAristaNodo(G.getListaAristas()[4])
-a.AgregarAristaNodo(G.getListaAristas()[5])
-print('La lista de aristas de a es: '+ str(a.ListaAristas))
-b.AgregarAristaNodo(G.getListaAristas()[0])
-b.AgregarAristaNodo(G.getListaAristas()[1])
-b.AgregarAristaNodo(G.getListaAristas()[2])
-b.AgregarAristaNodo(G.getListaAristas()[3])
-print('La lista de aristas de b es: '+ str(b.ListaAristas))
-c.AgregarAristaNodo(G.getListaAristas()[4])
-c.AgregarAristaNodo(G.getListaAristas()[5])
-c.AgregarAristaNodo(G.getListaAristas()[6])
-c.AgregarAristaNodo(G.getListaAristas()[7])
-print('La lista de aristas de c es: '+ str(c.ListaAristas))
-d.AgregarAristaNodo(G.getListaAristas()[6])
-d.AgregarAristaNodo(G.getListaAristas()[7])
-
-print('La lista de aristas de d es: '+ str(d.ListaAristas))
-
-aux2 = G.CaminoMasCorto(a)
-niveles = []
-for i in aux2:
-    niveles.append(i.nivel)
-
-print('Los nodos accesibles desde a son: ' + str(aux2) + ' en los niveles: ' + str(niveles))
-print('La ordenación topológica de los nodos ' +str(G.getListaNodos()) + ' es: ' + str(G.OrigenTopologico()))
-
-#EJEMPLO DIAPOSITIVA 23 TEMA 9.
-print('---------------------------- OTRO EJEMPLO NO DIRIGIDO ------------------------')
-
-#Definimos los nodos
-s = Nodo('s')
-a = Nodo('a')
-b = Nodo('b')
-c = Nodo('c')
-d = Nodo('d')
-e = Nodo('e')
-
-#Creamos un grafo no dirigido:
-HolaCaracola = Grafo(False)
-
-#Añadimos los nodos
-HolaCaracola.AgregarNodo(s)
-HolaCaracola.AgregarNodo(a)
-HolaCaracola.AgregarNodo(b)
-HolaCaracola.AgregarNodo(c)
-HolaCaracola.AgregarNodo(d)
-HolaCaracola.AgregarNodo(e)
-print('La lista de nodos es: ' + str(HolaCaracola.getListaNodos()))
-
-#Añadimos las Aristas
-HolaCaracola.CrearArista(s,a)
-HolaCaracola.CrearArista(s,b)
-HolaCaracola.CrearArista(a,c)
-HolaCaracola.CrearArista(b,c)
-HolaCaracola.CrearArista(b,d)
-HolaCaracola.CrearArista(c,e)
-HolaCaracola.CrearArista(c,d)
-HolaCaracola.CrearArista(e,d)
-print('La lista de aristas es: ' + str(HolaCaracola.getListaAristas()))
-
-#Añadimos a cada nodo sus aristas salientes:
-s.AgregarAristaNodo(HolaCaracola.getListaAristas()[0])
-s.AgregarAristaNodo(HolaCaracola.getListaAristas()[1])
-s.AgregarAristaNodo(HolaCaracola.getListaAristas()[2])
-s.AgregarAristaNodo(HolaCaracola.getListaAristas()[3])
-print('La lista de aristas de s es: '+ str(s.ListaAristas))
-
-a.AgregarAristaNodo(HolaCaracola.getListaAristas()[0])
-a.AgregarAristaNodo(HolaCaracola.getListaAristas()[1])
-a.AgregarAristaNodo(HolaCaracola.getListaAristas()[4])
-a.AgregarAristaNodo(HolaCaracola.getListaAristas()[5])
-
-print('La lista de aristas de a es: '+ str(a.ListaAristas))
+#ListaPesos = [16,16,10,10,5,5,2,2,4,4,6,6,4,4,12,12,10,10,15,15,3,3,5,5,8,8,16,16,7,7]
+ListaPesos = [16,16,10,10,5,5,2,2,4,4]
+print('Los pesos de las aristas de D son: ' + str(ListaPesos))
+print('Los nodos accesibles desde a son: ' + str(aux5) + ' en los niveles: ' + str(niveles))
 
 
-b.AgregarAristaNodo(HolaCaracola.getListaAristas()[2])
-b.AgregarAristaNodo(HolaCaracola.getListaAristas()[3])
-b.AgregarAristaNodo(HolaCaracola.getListaAristas()[6])
-b.AgregarAristaNodo(HolaCaracola.getListaAristas()[7])
-b.AgregarAristaNodo(HolaCaracola.getListaAristas()[8])
-b.AgregarAristaNodo(HolaCaracola.getListaAristas()[9])
-
-
-print('La lista de aristas de b es: '+ str(b.ListaAristas))
-
-c.AgregarAristaNodo(HolaCaracola.getListaAristas()[4])
-c.AgregarAristaNodo(HolaCaracola.getListaAristas()[5])
-c.AgregarAristaNodo(HolaCaracola.getListaAristas()[6])
-c.AgregarAristaNodo(HolaCaracola.getListaAristas()[7])
-c.AgregarAristaNodo(HolaCaracola.getListaAristas()[10])
-c.AgregarAristaNodo(HolaCaracola.getListaAristas()[11])
-c.AgregarAristaNodo(HolaCaracola.getListaAristas()[12])
-c.AgregarAristaNodo(HolaCaracola.getListaAristas()[13])
-
-print('La lista de aristas de c es: '+ str(c.ListaAristas))
-
-d.AgregarAristaNodo(HolaCaracola.getListaAristas()[8])
-d.AgregarAristaNodo(HolaCaracola.getListaAristas()[9])
-d.AgregarAristaNodo(HolaCaracola.getListaAristas()[12])
-d.AgregarAristaNodo(HolaCaracola.getListaAristas()[13])
-d.AgregarAristaNodo(HolaCaracola.getListaAristas()[14])
-d.AgregarAristaNodo(HolaCaracola.getListaAristas()[15])
-
-print('La lista de aristas de d es: '+ str(d.ListaAristas))
-
-e.AgregarAristaNodo(HolaCaracola.getListaAristas()[10])
-e.AgregarAristaNodo(HolaCaracola.getListaAristas()[11])
-e.AgregarAristaNodo(HolaCaracola.getListaAristas()[14])
-e.AgregarAristaNodo(HolaCaracola.getListaAristas()[15])
-
-
-print('La lista de aristas de e es: '+ str(e.ListaAristas))
-
-aux3 = HolaCaracola.CaminoMasCorto(s)
-niveles = []
-for i in aux3:
-    niveles.append(i.nivel)
-
-print('Los nodos accesibles desde s son: ' + str(aux3) + ' en los niveles: ' + str(niveles))
-print('La ordenación topológica de los nodos ' +str(HolaCaracola.getListaNodos()) + ' es: ' + str(HolaCaracola.OrigenTopologico()))
+print(D.EncontrarIndiceArista(ac))
+print(D.getPesoArista(ac,ListaPesos))
+print(D.Distancia(a,c,ListaPesos))
+print(D.Dijkstra(a,ListaPesos))
 
 
 
-print('---------------------------- OTRO EJEMPLO DIRIGIDO ------------------------')
-
-#Definimos los nodos
-s = Nodo('s')
-a = Nodo('a')
-b = Nodo('b')
-c = Nodo('c')
-d = Nodo('d')
-e = Nodo('e')
-
-#Creamos un grafo no dirigido:
-HolaCaracola2 = Grafo(True)
-
-#Añadimos los nodos
-HolaCaracola2.AgregarNodo(s)
-HolaCaracola2.AgregarNodo(a)
-HolaCaracola2.AgregarNodo(b)
-HolaCaracola2.AgregarNodo(c)
-HolaCaracola2.AgregarNodo(d)
-HolaCaracola2.AgregarNodo(e)
-print('La lista de nodos es: ' + str(HolaCaracola2.getListaNodos()))
-
-#Añadimos las Aristas
-HolaCaracola2.CrearArista(s,a)
-HolaCaracola2.CrearArista(s,b)
-HolaCaracola2.CrearArista(a,c)
-HolaCaracola2.CrearArista(b,c)
-HolaCaracola2.CrearArista(b,d)
-HolaCaracola2.CrearArista(c,e)
-HolaCaracola2.CrearArista(c,d)
-HolaCaracola2.CrearArista(e,d)
-print('La lista de aristas es: ' + str(HolaCaracola2.getListaAristas()))
-
-#Añadimos a cada nodo sus aristas salientes:
-s.AgregarAristaNodo(HolaCaracola2.getListaAristas()[0])
-s.AgregarAristaNodo(HolaCaracola2.getListaAristas()[1])
-
-print('La lista de aristas de s es: '+ str(s.ListaAristas))
-
-
-a.AgregarAristaNodo(HolaCaracola2.getListaAristas()[2])
-
-
-print('La lista de aristas de a es: '+ str(a.ListaAristas))
-
-
-b.AgregarAristaNodo(HolaCaracola2.getListaAristas()[3])
-b.AgregarAristaNodo(HolaCaracola2.getListaAristas()[4])
 
 
 
-print('La lista de aristas de b es: '+ str(b.ListaAristas))
 
 
-c.AgregarAristaNodo(HolaCaracola2.getListaAristas()[5])
-c.AgregarAristaNodo(HolaCaracola2.getListaAristas()[6])
-
-print('La lista de aristas de c es: '+ str(c.ListaAristas))
 
 
-print('La lista de aristas de d es: '+ str(d.ListaAristas))
 
-e.AgregarAristaNodo(HolaCaracola2.getListaAristas()[7])
 
-print('La lista de aristas de e es: '+ str(e.ListaAristas))
 
-aux4 = HolaCaracola2.CaminoMasCorto(a)
-niveles = []
-for i in aux4:
-    niveles.append(i.nivel)
-
-print('Los nodos accesibles desde a son: ' + str(aux4) + ' en los niveles: ' + str(niveles))
-print('La ordenación topológica de los nodos ' +str(HolaCaracola2.getListaNodos()) + ' es: ' + str(HolaCaracola2.OrigenTopologico()))
-
-print('------------------ EJEMPLO DE GRAFO NO DIRIGIDO SIN ARISTAS ------------------------')
-
-s = Nodo('s')
-UnNodo = Grafo(False)
-UnNodo.AgregarNodo(s)
-print('La lista de nodos es: ' + str(UnNodo.getListaNodos()))
-print('La lista de aristas es: ' + str(UnNodo.getListaAristas()))
-print('La lista de aristas de s es: '+ str(s.ListaAristas))
-print('La ordenación topológica de los nodos ' +str(UnNodo.getListaNodos()) + ' es: ' + str(UnNodo.OrigenTopologico()))
-#Como vemos, en este caso no se da la contradicción del ejemplo 3.
