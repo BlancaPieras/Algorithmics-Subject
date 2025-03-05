@@ -1,3 +1,6 @@
+import copy
+
+
 class Nodo:
     def __init__(self, nombre):
         self.__nombre = nombre
@@ -26,9 +29,10 @@ class Nodo:
 class Arista:
     __next_id = 0
 
-    def __init__(self, nodo_salida, nodo_llegada):
+    def __init__(self, nodo_salida, nodo_llegada, peso):
         self.__nodo_salida = nodo_salida
         self.__nodo_llegada = nodo_llegada
+        self.__peso = peso
         self.__id = Arista.__next_id
         Arista.__next_id += 1
 
@@ -37,6 +41,9 @@ class Arista:
 
     def get_llegada(self):
         return self.__nodo_llegada
+
+    def get_peso(self):
+        return self.__peso
 
     def __repr__(self):
         return str(self.__nodo_salida) + "-->" + str(self.__nodo_llegada)
@@ -53,14 +60,18 @@ class Grafo:
         self.__nodos.append(nuevo_nodo)
         return nuevo_nodo
 
-    def add_arista(self, salida, llegada):
+    def add_arista(self, salida, llegada, peso = 0):
         nodo_salida = self.get_nodo(salida)
         nodo_llegada = self.get_nodo(llegada)
-        nueva_arista = Arista(nodo_salida, nodo_llegada)
+        # arista en un sentido
+        nueva_arista = Arista(nodo_salida, nodo_llegada, peso)
         self.__aristas.append(nueva_arista)
         nodo_salida.add_arista_salida(nueva_arista)
         nodo_llegada.add_arista_llegada(nueva_arista)
+        # arista en el otro sentido si no es dirigido
         if self.__dirigido == False:
+            nueva_arista = Arista(nodo_llegada, nodo_salida, peso)
+            self.__aristas.append(nueva_arista)
             nodo_llegada.add_arista_salida(nueva_arista)
             nodo_salida.add_arista_llegada(nueva_arista)
         return nueva_arista
@@ -99,6 +110,49 @@ class Grafo:
             del n.distancia
         return resultado
 
+    def dijkstra(self, nodo_fuente):
+        MAX_VALUE = 999
+        for n in self.__nodos:
+            n.explorado = False
+            n.distancia = MAX_VALUE
+            n.previo = None
+            n.camino = []
+        nodo_fuente.explorado = True
+        nodo_fuente.distancia = 0
+        l = [nodo_fuente]
+        menor_peso = 0
+        while menor_peso >= 0:
+            best_arista = None
+            menor_peso = -1
+            for n in l:
+                for a in n.get_aristas_salida():
+                    if a.get_llegada().explorado == False:
+                        total = a.get_salida().distancia + a.get_peso()
+                        if best_arista == None or total < menor_peso:
+                            menor_peso = total
+                            best_arista = a
+
+            if best_arista != None:
+                origen = best_arista.get_salida()
+                nuevo = best_arista.get_llegada()
+                nuevo.explorado = True
+                nuevo.distancia = menor_peso
+                nuevo.previo = origen
+                nuevo.camino = copy.copy(origen.camino)
+                nuevo.camino.append(best_arista)
+                l.append(nuevo)
+
+        resultado = []
+        for n in self.__nodos:
+            r = (n, n.distancia, n.previo, n.camino)
+            resultado.append(r)
+            # borramos los atribtos temporales creados
+            del n.explorado
+            del n.distancia
+            del n.previo
+            del n.camino
+        return resultado
+
     def dfs_topo(self, nodo):
         nodo.explorado = True
         for a in nodo.get_aristas_salida():
@@ -121,7 +175,6 @@ class Grafo:
             if n.explorado == False:
                 self.dfs_topo(n)
 
-
         resultado = []
         for n in self.__nodos:
             r = (n, n.orden)
@@ -140,27 +193,31 @@ g1.add_nodo("B")
 g1.add_nodo("C")
 g1.add_nodo("D")
 g1.add_nodo("E")
-g1.add_arista("A", "B")
-g1.add_arista("A", "C")
-g1.add_arista("B", "C")
-g1.add_arista("B", "D")
-g1.add_arista("C", "D")
-g1.add_arista("D", "E")
+g1.add_arista("A", "B", 1)
+g1.add_arista("A", "C", 3)
+g1.add_arista("B", "C", 1)
+g1.add_arista("B", "D", 2)
+g1.add_arista("C", "D", 3)
+g1.add_arista("D", "E", 1)
 
-cmc = g1.camino_mas_corto(g1.get_nodo("A"))
-print(cmc)
+caminos = g1.dijkstra(g1.get_nodo("A"))
+print(caminos)
 
-g2 = Grafo(True)
+g2 = Grafo(False)
+g2.add_nodo("S")
 g2.add_nodo("A")
 g2.add_nodo("B")
 g2.add_nodo("C")
 g2.add_nodo("D")
-g2.add_nodo("E")
-g2.add_arista("A", "B")
-g2.add_arista("B", "C")
-g2.add_arista("A", "C")
-g2.add_arista("C", "D")
-g2.add_arista("D", "E")
+g2.add_nodo("T")
+g2.add_arista("S", "A", 4)
+g2.add_arista("S", "B", 7)
+g2.add_arista("S", "C", 3)
+g2.add_arista("A", "B", 3)
+g2.add_arista("A", "D", 2)
+g2.add_arista("C", "D", 3)
+g2.add_arista("B", "T", 2)
+g2.add_arista("D", "T", 2)
 
-orden = g2.orden_topologico()
-print(orden)
+caminos = g2.dijkstra(g2.get_nodo("S"))
+print(caminos)
