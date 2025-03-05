@@ -7,6 +7,18 @@ from Insertion_sort import insertionSort
 from Merge_sort import mergeSort
 from Merge3_sort import merge3Sort
 from Quick_sort import quickSort
+from Quick_sort import quickSort_posiciones
+from Quick_sort import quickSort_aleatorio
+
+
+def check_sorted(algorithm, original, ordenada):
+    for i in range(0, len(ordenada) - 1):
+        if ordenada[i] > ordenada[i + 1]:
+            print(algorithm.__name__)
+            print(original)
+            print(ordenada)
+            raise "Error, lista no ordenada"
+
 
 # realiza la medicion de algorithm (método de ordenación)
 # pasándole una copia de nums
@@ -15,17 +27,21 @@ def measure_algorithm(algorithm, nums):
     start_time = time.time_ns()
     algorithm(nums_copy)
     total_time = time.time_ns() - start_time
+    check_sorted(algorithm, nums, nums_copy)
     return (total_time / 10 ** 9)
 
 
 num_samples = 30  # numero de muestras
 num_elements = 10000  # numero de elementos de la lista
 
+
 def pythonSort(l):
     l.sort()
 
+
 # algoritmos a evaluar
-algorithms = [bubbleSort, selectionSort, insertionSort, mergeSort, merge3Sort, quickSort, pythonSort]
+algorithms = [bubbleSort, selectionSort, insertionSort, mergeSort, merge3Sort, quickSort, quickSort_posiciones,
+              quickSort_aleatorio, pythonSort]
 tiempos = [0] * len(algorithms)
 
 for n in range(0, num_samples):
@@ -46,11 +62,14 @@ for algorithm, t in zip(algorithms, tiempos):
 Ejemplo de Ejecución
 Num Samples = 30
 Num Elements = 10000
-bubbleSort : 0.392868
-selectionSort : 0.17272289333333332
-insertionSort : 0.18218730666666666
-mergeSort : 0.00179975
-merge3Sort : 0.0016998966666666665
-quickSort : 0.0011014966666666667
-pythonSort : 3.3220000000000004e-05
+bubbleSort : 0.38772154000000003
+selectionSort : 0.18429686333333334
+insertionSort : 0.1801445633333333
+mergeSort : 0.0018318766666666666
+merge3Sort : 0.0015995066666666666
+quickSort : 0.0012313066666666667
+quickSort_posiciones : 0.0016184300000000001
+quickSort_aleatorio : 0.0025000033333333334
+pythonSort : 6.695e-05
+
 """
